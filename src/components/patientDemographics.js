@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 
 const PatientDemographics = () => {
   const [formData, setFormData] = useState({
@@ -17,6 +18,7 @@ const PatientDemographics = () => {
   });
 
   const [message, setMessage] = useState('');
+  const navigate = useNavigate();
 
   const { familyName, givenName, gender, dob, address1, address2, country, state, city, zip, phoneNumber } = formData;
 
@@ -27,6 +29,20 @@ const PatientDemographics = () => {
     try {
       await axios.post('http://localhost:5000/api/patient-demographics', formData);
       setMessage('Demographics saved successfully!');
+      setFormData({
+        familyName: '',
+        givenName: '',
+        gender: '',
+        dob: '',
+        address1: '',
+        address2: '',
+        country: '',
+        state: '',
+        city: '',
+        zip: '',
+        phoneNumber: '',
+      });
+      navigate('/medication-allergies');
     } catch (err) {
       setMessage('Error saving demographics.');
       console.error(err.response.data);

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import './PatientMedicationsAndAllergies.css'; // For UI enhancements
+import './PatientMedicationsAndAllergies.css'; 
 
 const PatientMedicationsAndAllergies = () => {
   const [medications, setMedications] = useState([]);
@@ -81,7 +81,7 @@ const PatientMedicationsAndAllergies = () => {
 
   const handleSubmit = async () => {
     try {
-      await axios.post('http://localhost:5000/api/submit', { medications, allergies });
+      await axios.post('/api/submit', { medications, allergies });
       alert('Submission successful');
     } catch (err) {
       setFeedback('Error submitting data');
