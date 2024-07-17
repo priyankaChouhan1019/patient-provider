@@ -3,6 +3,8 @@ import './App.css';
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import Register from './components/Register';
 import Login from './components/Login';
+import PatientDemographics from './components/patientDemographics';
+import PatientMedicationsAndAllergies from './components/PatientMedicationsAndAllergies';
 
 function App() {
   return (
@@ -10,10 +12,8 @@ function App() {
       <Routes>
         <Route path="/login" element={<Login/>} />
         <Route path="/register" element={<Register />} />
-        {/* <Route path="/patient-dashboard" element={role === 'patient' ? <PatientDashboard /> : <Navigate to="/login" />} />
-        <Route path="/physician-dashboard" element={role === 'physician' ? <PhysicianDashboard /> : <Navigate to="/login" />} />
-        <Route path="/admin-dashboard" element={role === 'admin' ? <AdminDashboard /> : <Navigate to="/login" />} /> */}
-        {/* <Route path="/" element={<Navigate to="/login" />} /> */}
+        <Route path="/patient-demographics" element={<PatientDemographics/>} />
+        <Route path="/PatientMedicationsAndAllergies" element={<PatientMedicationsAndAllergies/>} />
       </Routes>
     </Router>
   );
