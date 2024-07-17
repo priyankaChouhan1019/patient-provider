@@ -8,6 +8,9 @@ const patientDemographicsRoutes = require('./routes/patientRoutes');
 const medicationRoutes = require('./routes/medicationRoutes');
 const allergyRoutes = require('./routes/allergyRoutes');
 
+require('dotenv').config();
+
+
 const app = express();
 
 // Connect Database
@@ -23,6 +26,8 @@ app.use('/api/otp', otpRoutes);
 app.use('/api', patientDemographicsRoutes);
 app.use('/api/medication', medicationRoutes); 
 app.use('/api/allergy', allergyRoutes); 
+
+
 // Serve static assets if in production
 if (process.env.NODE_ENV === 'production') {
   app.use(express.static('client/build'));

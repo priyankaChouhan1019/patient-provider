@@ -34,32 +34,68 @@ const register = async (req, res) => {
 //@route POST /api/users/login
 //@access public
 
-const loginUser = asyncHandler(async (req,res)=>{
-    const { email, password } = req.body;
+// const loginUser = asyncHandler(async (req,res)=>{
+//     const { email, password } = req.body;
+//   if (!email || !password) {
+//     return res.status(400).json({ msg: 'All fields are mandatory!' });
+//   }
+//   const user = await User.findOne({ email });
+  
+//   //compare password with hashedpassword
+//   const payload = {
+//     user: {
+//       username: user.username,
+//       email: user.email,
+//       id: user.id,
+//     },
+//   };
+//   if (user && (await bcrypt.compare(password, user.password))) {
+//     const accessToken = jwt.sign(
+//         payload,
+//       process.env.ACCESS_TOKEN_SECERT,
+//       { expiresIn: "15m" }
+//     );
+//     res.status(200).json({ accessToken });
+//   } else {
+//     res.status(401);
+//     throw new Error("email or password is not valid");
+//   }
+// });
+
+const loginUser = asyncHandler(async (req, res) => {
+  const { email, password } = req.body;
   if (!email || !password) {
     return res.status(400).json({ msg: 'All fields are mandatory!' });
   }
   const user = await User.findOne({ email });
   
-  //compare password with hashedpassword
+  if (!user) {
+    res.status(401);
+    throw new Error("Email or password is not valid");
+  }
+
+  // Compare password with hashed password
+  const isMatch = await bcrypt.compare(password, user.password);
+  if (!isMatch) {
+    res.status(401);
+    throw new Error("Email or password is not valid");
+  }
+
   const payload = {
     user: {
       username: user.username,
       email: user.email,
-      id: user.id,
+      id: user._id,
     },
   };
-  if (user && (await bcrypt.compare(password, user.password))) {
-    const accessToken = jwt.sign(
-        payload,
-      process.env.ACCESS_TOKEN_SECERT,
-      { expiresIn: "15m" }
-    );
-    res.status(200).json({ accessToken });
-  } else {
-    res.status(401);
-    throw new Error("email or password is not valid");
-  }
+
+  const accessToken = jwt.sign(
+    payload,
+    process.env.JWT_SECRET,
+    { expiresIn: "15m" }
+  );
+
+  res.status(200).json({ accessToken });
 });
 
 //@desc current  user
