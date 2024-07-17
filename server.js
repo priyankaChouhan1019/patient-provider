@@ -3,6 +3,10 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 const connectdb = require("./config/dbConnection");
 const authRoutes = require('./routes/userRoutes')
+const otpRoutes = require('./routes/otpRoutes')
+const patientDemographicsRoutes = require('./routes/patientRoutes');
+const medicationRoutes = require('./routes/medicationRoutes');
+const allergyRoutes = require('./routes/allergyRoutes');
 
 const app = express();
 
@@ -15,7 +19,10 @@ app.use(bodyParser.json());
 
 // Routes
 app.use('/api/auth', authRoutes);
-
+app.use('/api/otp', otpRoutes);
+app.use('/api', patientDemographicsRoutes);
+app.use('/api/medication', medicationRoutes); 
+app.use('/api/allergy', allergyRoutes); 
 // Serve static assets if in production
 if (process.env.NODE_ENV === 'production') {
   app.use(express.static('client/build'));

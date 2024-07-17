@@ -1,43 +1,23 @@
-// controllers/otpController.js
-const otpGenerator = require('otp-generator');
-const OTP = require('../models/otpModel');
-const User = require("../models/userModels")
+const { verifyOtp, resendOtp } = require('../services/otpService');
 
-sendOTP = async (req, res) => {
+const verifyOtpController = async (req, res) => {
+  const { email, otp } = req.body;
   try {
-    const { email } = req.body;
-    // Check if user is already present
-    const checkUserPresent = await User.findOne({ email });
-    // If user found with provided email
-    if (checkUserPresent) {
-      return res.status(401).json({
-        success: false,
-        message: 'User is already registered',
-      });
-    }
-    let otp = otpGenerator.generate(6, {
-      upperCaseAlphabets: false,
-      lowerCaseAlphabets: false,
-      specialChars: false,
-    });
-    let result = await OTP.findOne({ otp: otp });
-    while (result) {
-      otp = otpGenerator.generate(6, {
-        upperCaseAlphabets: false,
-      });
-      result = await OTP.findOne({ otp: otp });
-    }
-    const otpPayload = { email, otp };
-    const otpBody = await OTP.create(otpPayload);
-    res.status(200).json({
-      success: true,
-      message: 'OTP sent successfully',
-      otp,
-    });
-  } catch (error) {
-    console.log(error.message);
-    return res.status(500).json({ success: false, error: error.message });
+    const result = await verifyOtp(email, otp);
+    res.status(200).json(result);
+  } catch (err) {
+    res.status(400).json({ msg: err.message });
   }
 };
 
-module.exports = {sendOTP}
+const resendOtpController = async (req, res) => {
+  const { email } = req.body;
+  try {
+    const result = await resendOtp(email);
+    res.status(200).json(result);
+  } catch (err) {
+    res.status(400).json({ msg: err.message });
+  }
+};
+
+module.exports = { verifyOtpController, resendOtpController };
