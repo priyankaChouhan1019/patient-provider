@@ -28,9 +28,15 @@ const Login = ({ onLogin }) => {
   const onSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await axios.post('/api/auth/login', formData);
-      onLogin(res.data);
-      navigate('/patient-demographics');
+      const res = await axios.post('http://localhost:5000/api/auth/login', formData);
+      const { token, hasDemographics } = res.data;
+      localStorage.setItem('token', token);
+
+      if (hasDemographics) {
+        navigate('/dashboard');
+      } else {
+        navigate('/patient-demographics');
+      }
     } catch (err) {
       console.error(err.response.data);
     }
@@ -40,9 +46,7 @@ const Login = ({ onLogin }) => {
     <MDBContainer className="my-5">
       <MDBCard>
         <MDBRow className='g-0'>
-          <MDBCol md='6'>
-            <MDBCardImage src='https://mdbcdn.b-cdn.net/img/Photos/new-templates/bootstrap-login-form/img1.webp' alt="login form" className='rounded-start w-100'/>
-          </MDBCol>
+          
           <MDBCol md='6'>
             <MDBCardBody className='d-flex flex-column'>
               <div className='d-flex flex-row mt-2'>

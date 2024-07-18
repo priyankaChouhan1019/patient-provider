@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect} from 'react';
 import axios from 'axios';
 import './PatientMedicationsAndAllergies.css'; 
+import { useNavigate } from 'react-router-dom';
 
 const PatientMedicationsAndAllergies = () => {
   const [medications, setMedications] = useState([]);
@@ -27,7 +28,33 @@ const PatientMedicationsAndAllergies = () => {
     severity: '',
     sourceOfInformation: ''
   });
+
+  const [consent, setConsent] = useState(false);
   const [feedback, setFeedback] = useState('');
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    // Check if user has already submitted the information
+    const checkSubmissionStatus = async () => {
+      try {
+
+        const userId = localStorage.getItem('userId'); // Retrieve user ID from localStorage
+        if (!userId) {
+          navigate('/login'); // Redirect to login if user ID is not found
+          return;
+        }
+       // const userId = 'YOUR_USER_ID'; // Replace with actual user ID
+        const res = await axios.get(`http://localhost:5000/api/users/${userId}/status`);
+        if (res.data.submissionStatus === 'completed') {
+          navigate('/dashboard');
+        }
+      } catch (err) {
+        console.error('Error checking submission status', err);
+      }
+    };
+
+    checkSubmissionStatus();
+  }, [navigate]);
 
   const handleMedicationChange = (e) => {
     setMedication({ ...medication, [e.target.name]: e.target.value });
@@ -35,6 +62,10 @@ const PatientMedicationsAndAllergies = () => {
 
   const handleAllergyChange = (e) => {
     setAllergy({ ...allergy, [e.target.name]: e.target.value });
+  };
+
+  const handleConsentChange = (e) => {
+    setConsent(e.target.checked);
   };
 
   const addMedication = async () => {
@@ -80,9 +111,16 @@ const PatientMedicationsAndAllergies = () => {
   };
 
   const handleSubmit = async () => {
+
+    if (!consent) {
+      setFeedback('Consent is required.');
+      return;
+    }
+
     try {
-      await axios.post('/api/submit', { medications, allergies });
+      await axios.post('http://localhost:5000/api/submit', { medications, allergies,consent });
       alert('Submission successful');
+      navigate('/dashboard');
     } catch (err) {
       setFeedback('Error submitting data');
     }
@@ -120,7 +158,7 @@ const PatientMedicationsAndAllergies = () => {
 
       <h2>Consent</h2>
       <form>
-        <input type="checkbox" name="consent" required />
+      <input type="checkbox" name="consent" checked={consent} onChange={handleConsentChange} required />
         <label>I consent to the capture of this information.</label>
         <button type="button" onClick={handleSubmit}>Submit</button>
       </form>
