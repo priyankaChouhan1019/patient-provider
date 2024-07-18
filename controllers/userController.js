@@ -89,13 +89,17 @@ const loginUser = asyncHandler(async (req, res) => {
     },
   };
 
-  const accessToken = jwt.sign(
+  const token = jwt.sign(
     payload,
     process.env.JWT_SECRET,
     { expiresIn: "15m" }
   );
+  const demographics = await User.findOne({ userId: user._id });
+  const hasDemographics = !!demographics;
 
-  res.status(200).json({ accessToken });
+  res.json({ token, hasDemographics });
+
+  res.status(200).json({ token });
 });
 
 //@desc current  user

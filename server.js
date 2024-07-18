@@ -7,6 +7,7 @@ const otpRoutes = require('./routes/otpRoutes')
 const patientDemographicsRoutes = require('./routes/patientRoutes');
 const medicationRoutes = require('./routes/medicationRoutes');
 const allergyRoutes = require('./routes/allergyRoutes');
+const submitRoutes = require('./routes/submitRoutes');
 
 require('dotenv').config();
 
@@ -26,6 +27,7 @@ app.use('/api/otp', otpRoutes);
 app.use('/api', patientDemographicsRoutes);
 app.use('/api/medication', medicationRoutes); 
 app.use('/api/allergy', allergyRoutes); 
+app.use('/api', submitRoutes);
 
 
 // Serve static assets if in production

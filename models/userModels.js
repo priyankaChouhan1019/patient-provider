@@ -26,7 +26,13 @@ const userSchema = mongoose.Schema({
          },
     otpExpires: {
          type: Date
-         }
+         },
+
+         submissionStatus: {
+            type: String,
+            enum: ['pending', 'completed'],
+            default: 'pending'
+          }
     
 },
 {
