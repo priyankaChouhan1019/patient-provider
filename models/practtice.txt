@@ -1,0 +1,118 @@
+const { Sequelize, DataTypes } = require('sequelize');
+const sequelize = new Sequelize('your_database', 'username', 'password', {
+  host: 'localhost',
+  dialect: 'mysql'
+});
+
+const Patient = sequelize.define('patients', {
+  name: DataTypes.STRING,
+  patient_mrn: DataTypes.STRING,
+  patient_birth_date: DataTypes.DATE,
+  patient_sex: DataTypes.STRING,
+});
+
+const Study = sequelize.define('studies', {
+  study_instance_uid: DataTypes.STRING,
+  study_date: DataTypes.DATE,
+  study_description: DataTypes.STRING,
+  createdAt: DataTypes.DATE,
+  patient_id: DataTypes.INTEGER,
+});
+
+const StudySeries = sequelize.define('study_series', {
+  series_instance_uid: DataTypes.STRING,
+  series_date: DataTypes.DATE,
+  series_description: DataTypes.STRING,
+  modality: DataTypes.STRING,
+  accession_no: DataTypes.STRING,
+  patient_id: DataTypes.INTEGER,
+});
+
+const Instance = sequelize.define('instances', {
+  instance_num: DataTypes.INTEGER,
+  sop_instance_uid: DataTypes.STRING,
+  createdAt: DataTypes.DATE,
+  study_series_id: DataTypes.INTEGER,
+});
+
+// Relationships
+Patient.hasMany(Study, { foreignKey: 'patient_id' });
+Study.belongsTo(Patient, { foreignKey: 'patient_id' });
+
+Study.hasMany(StudySeries, { foreignKey: 'study_id' });
+StudySeries.belongsTo(Study, { foreignKey: 'study_id' });
+
+StudySeries.hasMany(Instance, { foreignKey: 'study_series_id' });
+Instance.belongsTo(StudySeries, { foreignKey: 'study_series_id' });
+
+
+
+
+
+
+
+
+const express = require('express');
+const app = express();
+
+// Import models
+const { Patient, Study, StudySeries, Instance } = require('./models'); // Adjust path accordingly
+
+app.get('/patients/:id', async (req, res) => {
+  try {
+    const patientId = req.params.id;
+    const patient = await Patient.findOne({
+      where: { id: patientId },
+      include: [
+        {
+          model: Study,
+          include: [
+            {
+              model: StudySeries,
+              include: [Instance],
+            },
+          ],
+        },
+      ],
+    });
+
+    if (!patient) {
+      return res.status(404).json({ message: 'Patient not found' });
+    }
+
+    const data = patient.studies.map(study => ({
+      patientName: patient.name,
+      MRN: patient.patient_mrn,
+      studyDate: study.study_date,
+      studyDescription: study.study_description,
+      modality: study.study_series[0]?.modality,
+      accession: study.study_series[0]?.accession_no,
+      instances: study.study_series[0]?.instances.map(instance => instance.instance_num),
+    }));
+
+    res.json(data);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+app.listen(3000, () => {
+  console.log('Server running on port 3000');
+});
+
+
+
+
+
+
+[
+  {
+    "patientName": "John Doe",
+    "MRN": "123456",
+    "studyDate": "2023-07-23",
+    "studyDescription": "Chest X-ray",
+    "modality": "XRAY",
+    "accession": "ACC123",
+    "instances": [1, 2, 3]
+  }
+]
