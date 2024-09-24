@@ -182,3 +182,189 @@ async function insertSampleData() {
 
   console.log('Sample data inserted!');
 }
+
+
+
+//models
+const { DataTypes } = require('sequelize');
+const sequelize = require('../config/database');
+
+const Patient = sequelize.define('patients', {
+  name: DataTypes.STRING,
+  patient_mrn: DataTypes.STRING,
+  patient_birth_date: DataTypes.DATE,
+  patient_sex: DataTypes.STRING,
+});
+
+module.exports = Patient;
+
+
+const { DataTypes } = require('sequelize');
+const sequelize = require('../config/database');
+const Patient = require('./patient');
+
+const Study = sequelize.define('studies', {
+  study_instance_uid: DataTypes.STRING,
+  study_date: DataTypes.DATE,
+  study_description: DataTypes.STRING,
+  patient_id: DataTypes.INTEGER,
+});
+
+// Relationship
+Patient.hasMany(Study, { foreignKey: 'patient_id' });
+Study.belongsTo(Patient, { foreignKey: 'patient_id' });
+
+module.exports = Study;
+
+
+const { DataTypes } = require('sequelize');
+const sequelize = require('../config/database');
+const Study = require('./study');
+
+const StudySeries = sequelize.define('study_series', {
+  series_instance_uid: DataTypes.STRING,
+  series_date: DataTypes.DATE,
+  series_description: DataTypes.STRING,
+  modality: DataTypes.STRING,
+  accession_no: DataTypes.STRING,
+  study_id: DataTypes.INTEGER,
+});
+
+// Relationship
+Study.hasMany(StudySeries, { foreignKey: 'study_id' });
+StudySeries.belongsTo(Study, { foreignKey: 'study_id' });
+
+module.exports = StudySeries;
+
+
+const { DataTypes } = require('sequelize');
+const sequelize = require('../config/database');
+const StudySeries = require('./studySeries');
+
+const Instance = sequelize.define('instances', {
+  instance_num: DataTypes.INTEGER,
+  sop_instance_uid: DataTypes.STRING,
+  study_series_id: DataTypes.INTEGER,
+});
+
+// Relationship
+StudySeries.hasMany(Instance, { foreignKey: 'study_series_id' });
+Instance.belongsTo(StudySeries, { foreignKey: 'study_series_id' });
+
+module.exports = Instance;
+
+
+
+
+/////////////roues
+const express = require('express');
+const router = express.Router();
+const Patient = require('../models/patient');
+const Study = require('../models/study');
+const StudySeries = require('../models/studySeries');
+const Instance = require('../models/instance');
+
+// Route to fetch patient data
+router.get('/:id', async (req, res) => {
+  try {
+    const patientId = req.params.id;
+    const patient = await Patient.findOne({
+      where: { id: patientId },
+      include: [
+        {
+          model: Study,
+          include: [
+            {
+              model: StudySeries,
+              include: [Instance],
+            },
+          ],
+        },
+      ],
+    });
+
+    if (!patient) {
+      return res.status(404).json({ message: 'Patient not found' });
+    }
+
+    const data = patient.studies.map(study => ({
+      patientName: patient.name,
+      MRN: patient.patient_mrn,
+      studyDate: study.study_date,
+      studyDescription: study.study_description,
+      modality: study.study_series[0]?.modality,
+      accession: study.study_series[0]?.accession_no,
+      instances: study.study_series[0]?.instances.map(instance => instance.instance_num),
+    }));
+
+    res.json(data);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+module.exports = router;
+
+
+const express = require('express');
+const sequelize = require('./config/database');
+const patientRoutes = require('./routes/patients');
+
+// Initialize the app
+const app = express();
+
+// Sync the database and create tables
+sequelize.sync({ force: true }).then(() => {
+  console.log('Database & tables created!');
+  insertSampleData(); // Insert sample data after creating tables
+});
+
+// Middleware
+app.use(express.json());
+
+// Use patient routes
+app.use('/patients', patientRoutes);
+
+// Start the server
+app.listen(3000, () => {
+  console.log('Server is running on port 3000');
+});
+
+// Sample data insertion
+async function insertSampleData() {
+  const Patient = require('./models/patient');
+  const Study = require('./models/study');
+  const StudySeries = require('./models/studySeries');
+  const Instance = require('./models/instance');
+
+  const newPatient = await Patient.create({
+    name: 'John Doe',
+    patient_mrn: 'MRN123456',
+    patient_birth_date: '1980-05-12',
+    patient_sex: 'M',
+  });
+
+  const newStudy = await Study.create({
+    study_instance_uid: '1.2.3.4',
+    study_date: '2024-09-23',
+    study_description: 'Chest X-ray',
+    patient_id: newPatient.id,
+  });
+
+  const newStudySeries = await StudySeries.create({
+    series_instance_uid: '5.6.7.8',
+    series_date: '2024-09-23',
+    series_description: 'Series 1 Description',
+    modality: 'XRAY',
+    accession_no: 'ACC123456',
+    study_id: newStudy.id,
+  });
+
+  await Instance.create({
+    instance_num: 1,
+    sop_instance_uid: 'SOP123456',
+    study_series_id: newStudySeries.id,
+  });
+
+  console.log('Sample data inserted!');
+}
