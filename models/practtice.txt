@@ -116,3 +116,69 @@ app.listen(3000, () => {
     "instances": [1, 2, 3]
   }
 ]
+
+
+
+
+const express = require('express');
+const sequelize = require('./config/database');
+const patientRoutes = require('./routes/patients');
+
+// Initialize the app
+const app = express();
+
+// Sync the database and create tables
+sequelize.sync({ force: true }).then(() => {
+  console.log('Database & tables created!');
+  insertSampleData(); // Insert sample data after creating tables
+});
+
+// Middleware
+app.use(express.json());
+
+// Use patient routes
+app.use('/patients', patientRoutes);
+
+// Start the server
+app.listen(3000, () => {
+  console.log('Server is running on port 3000');
+});
+
+// Sample data insertion
+async function insertSampleData() {
+  const Patient = require('./models/patient');
+  const Study = require('./models/study');
+  const StudySeries = require('./models/studySeries');
+  const Instance = require('./models/instance');
+
+  const newPatient = await Patient.create({
+    name: 'John Doe',
+    patient_mrn: 'MRN123456',
+    patient_birth_date: '1980-05-12',
+    patient_sex: 'M',
+  });
+
+  const newStudy = await Study.create({
+    study_instance_uid: '1.2.3.4',
+    study_date: '2024-09-23',
+    study_description: 'Chest X-ray',
+    patient_id: newPatient.id,
+  });
+
+  const newStudySeries = await StudySeries.create({
+    series_instance_uid: '5.6.7.8',
+    series_date: '2024-09-23',
+    series_description: 'Series 1 Description',
+    modality: 'XRAY',
+    accession_no: 'ACC123456',
+    study_id: newStudy.id,
+  });
+
+  await Instance.create({
+    instance_num: 1,
+    sop_instance_uid: 'SOP123456',
+    study_series_id: newStudySeries.id,
+  });
+
+  console.log('Sample data inserted!');
+}
